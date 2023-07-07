@@ -86,7 +86,7 @@ const CreateBlogPost = () => {
           label="Post Image"
           register={register('featuredImage', { required: 'Required' })}
           type="file"
-          accept="image/png,image/png"
+          accept="image/png,image/jpg"
           error={errors.featuredImage}
         />
         <MarkdownEditor
