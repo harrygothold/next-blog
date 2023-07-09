@@ -3,12 +3,7 @@ import createHttpError from 'http-errors';
 import UserModel from '../models/user';
 import bcrypt from 'bcrypt';
 import assertIsDefined from '../utils/assertIsDefined';
-
-interface SignUpBody {
-  username: string;
-  email: string;
-  password: string;
-}
+import { SignUpBody } from '../validation/users';
 
 export const signUp: RequestHandler<
   unknown,

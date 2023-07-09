@@ -2,6 +2,8 @@ import express from 'express';
 import * as BlogPostsController from '../controllers/blog-posts';
 import { featuredImageUpload } from '../middleware/image-upload';
 import requiresAuth from '../middleware/requiresAuth';
+import validateRequestSchema from '../middleware/validateRequestSchema';
+import { createBlogPostSchema } from '../validation/blog-posts';
 
 const router = express.Router();
 
@@ -15,6 +17,7 @@ router.post(
   '/',
   requiresAuth,
   featuredImageUpload.single('featuredImage'),
+  validateRequestSchema(createBlogPostSchema),
   BlogPostsController.createBlogPost
 );
 
