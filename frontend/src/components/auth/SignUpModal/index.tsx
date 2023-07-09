@@ -4,15 +4,24 @@ import PasswordInputField from '@/components/PasswordInputField';
 import useAuthenticatedUser from '@/hooks/useAuthenticatedUser';
 import * as UsersApi from '@/network/api/user';
 import { BadRequestError, ConflictError } from '@/network/http-errors';
+import {
+  emailSchema,
+  passwordSchema,
+  usernameSchema,
+} from '@/utils/validation';
 import { useState } from 'react';
 import { Alert, Button, Form, Modal } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
 
-interface SignUpFormData {
-  username: string;
-  email: string;
-  password: string;
-}
+const validationSchema = yup.object({
+  username: usernameSchema.required('This field is required'),
+  email: emailSchema.required('This field is required'),
+  password: passwordSchema.required('This field is required'),
+});
+
+type SignUpFormData = yup.InferType<typeof validationSchema>;
 
 interface SignUpModalProps {
   onDismiss: () => void;
@@ -29,7 +38,10 @@ const SignUpModal = ({
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SignUpFormData>();
+  } = useForm<SignUpFormData>({
+    // @ts-ignore
+    resolver: yupResolver(validationSchema),
+  });
 
   const onSubmit = async (credentials: SignUpFormData) => {
     try {
