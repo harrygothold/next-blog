@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Button, Container, Nav, Navbar } from 'react-bootstrap';
+import { Button, Container, Nav, Navbar, NavDropdown } from 'react-bootstrap';
 import { FiEdit } from 'react-icons/fi';
 import logo from '@/assets/images/flow-blog-logo.png';
 import Image from 'next/image';
@@ -9,19 +9,65 @@ import useAuthenticatedUser from '@/hooks/useAuthenticatedUser';
 import { useState } from 'react';
 import LoginModal from '../auth/LoginModal';
 import SignUpModal from '../auth/SignUpModal';
+import { User } from '@/models/user';
+import profilePicPlaceholder from '@/assets/images/profile-pic-placeholder.png';
+import * as UsersApi from '@/network/api/user';
 
-const LoggedInView = () => (
-  <Nav className="ms-auto">
-    <Nav.Link
-      as={Link}
-      href="/blog/new-post"
-      className="link-primary d-flex align-items-center gap-1"
-    >
-      <FiEdit />
-      Create a post
-    </Nav.Link>
-  </Nav>
-);
+interface LoggedInViewProps {
+  user: User;
+}
+
+const LoggedInView = ({ user }: LoggedInViewProps) => {
+  const { mutateUser } = useAuthenticatedUser();
+
+  const logout = async () => {
+    try {
+      await UsersApi.logout();
+      mutateUser(null);
+    } catch (error) {
+      console.error(error);
+      alert(error);
+    }
+  };
+
+  return (
+    <Nav className="ms-auto">
+      <Nav.Link
+        as={Link}
+        href="/blog/new-post"
+        className="link-primary d-flex align-items-center gap-1"
+      >
+        <FiEdit />
+        Create a post
+      </Nav.Link>
+      <Navbar.Text className="ms-md-3">
+        Hey, {user.displayName || 'User'}!
+      </Navbar.Text>
+      <NavDropdown
+        className={styles.accountDropdown}
+        title={
+          <Image
+            src={user.profilePicUrl || profilePicPlaceholder}
+            width={40}
+            height={40}
+            alt="User profile picture"
+            className="rounded-circle"
+          />
+        }
+      >
+        {user.username && (
+          <>
+            <NavDropdown.Item as={Link} href={`/users/${user.username}`}>
+              Profile
+            </NavDropdown.Item>
+            <NavDropdown.Divider />
+          </>
+        )}
+        <NavDropdown.Item onClick={logout}>Logout</NavDropdown.Item>
+      </NavDropdown>
+    </Nav>
+  );
+};
 
 const LoggedOutView = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -90,7 +136,7 @@ const NavBar = () => {
               Articles
             </Nav.Link>
           </Nav>
-          {user ? <LoggedInView /> : <LoggedOutView />}
+          {user ? <LoggedInView user={user} /> : <LoggedOutView />}
         </Navbar.Collapse>
       </Container>
     </Navbar>

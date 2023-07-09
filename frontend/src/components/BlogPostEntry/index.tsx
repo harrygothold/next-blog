@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Card } from 'react-bootstrap';
 import { formatDate } from '@/utils/utils';
 import Image from 'next/image';
+import UserProfileLink from '../UserProfileLink';
 
 interface BlogPostEntryProps {
   post: BlogPost;
@@ -10,7 +11,7 @@ interface BlogPostEntryProps {
 }
 
 const BlogPostEntry = ({
-  post: { slug, title, summary, featuredImageUrl, createdAt },
+  post: { slug, title, summary, featuredImageUrl, createdAt, author },
   className,
 }: BlogPostEntryProps) => {
   const postLink = `/blog/${slug}`;
@@ -32,6 +33,9 @@ const BlogPostEntry = ({
             <Link href={postLink}>{title}</Link>
           </Card.Title>
           <Card.Text>{summary}</Card.Text>
+          <Card.Text>
+            <UserProfileLink user={author} />
+          </Card.Text>
           <Card.Text className="text-muted small">
             <time dateTime={createdAt}>{formatDate(createdAt)}</time>
           </Card.Text>
