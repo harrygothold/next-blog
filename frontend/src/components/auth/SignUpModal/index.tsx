@@ -1,8 +1,11 @@
 import FormInputField from '@/components/FormInputField';
 import LoadingButton from '@/components/LoadingButton';
 import PasswordInputField from '@/components/PasswordInputField';
+import useAuthenticatedUser from '@/hooks/useAuthenticatedUser';
 import * as UsersApi from '@/network/api/user';
-import { Button, Form, Modal } from 'react-bootstrap';
+import { BadRequestError, ConflictError } from '@/network/http-errors';
+import { useState } from 'react';
+import { Alert, Button, Form, Modal } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 
 interface SignUpFormData {
@@ -13,10 +16,15 @@ interface SignUpFormData {
 
 interface SignUpModalProps {
   onDismiss: () => void;
-  onLoginInsteadClick: () => void;
+  onLoginInsteadClicked: () => void;
 }
 
-const SignUpModal = ({ onDismiss, onLoginInsteadClick }: SignUpModalProps) => {
+const SignUpModal = ({
+  onDismiss,
+  onLoginInsteadClicked,
+}: SignUpModalProps) => {
+  const [errorText, setErrorText] = useState<string | null>(null);
+  const { mutateUser } = useAuthenticatedUser();
   const {
     register,
     handleSubmit,
@@ -25,11 +33,17 @@ const SignUpModal = ({ onDismiss, onLoginInsteadClick }: SignUpModalProps) => {
 
   const onSubmit = async (credentials: SignUpFormData) => {
     try {
+      setErrorText(null);
       const newUser = await UsersApi.signUp(credentials);
-      alert(JSON.stringify(newUser));
+      mutateUser(newUser);
+      onDismiss();
     } catch (error) {
-      console.error(error);
-      alert(error);
+      if (error instanceof ConflictError || error instanceof BadRequestError) {
+        setErrorText(error.message);
+      } else {
+        console.error(error);
+        alert(error);
+      }
     }
   };
 
@@ -39,6 +53,7 @@ const SignUpModal = ({ onDismiss, onLoginInsteadClick }: SignUpModalProps) => {
         <Modal.Title>Sign Up</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        {errorText && <Alert variant="danger">{errorText}</Alert>}
         <Form onSubmit={handleSubmit(onSubmit)} noValidate>
           <FormInputField
             register={register('username')}
@@ -69,7 +84,9 @@ const SignUpModal = ({ onDismiss, onLoginInsteadClick }: SignUpModalProps) => {
         </Form>
         <div className="d-flex align-items-center gap-1 justify-content-center mt-1">
           Already have an account?
-          <Button variant="link">Log In</Button>
+          <Button onClick={onLoginInsteadClicked} variant="link">
+            Log In
+          </Button>
         </div>
       </Modal.Body>
     </Modal>

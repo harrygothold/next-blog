@@ -8,14 +8,10 @@ import styles from '@/styles/App.module.css';
 import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import NextNProgress from 'nextjs-progressbar';
-import useAuthenticatedUser from '@/hooks/useAuthenticatedUser';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export default function App({ Component, pageProps }: AppProps) {
-  const { user, userLoading, userLoadingError, mutateUser } =
-    useAuthenticatedUser();
-
   return (
     <>
       <Head>
@@ -28,7 +24,6 @@ export default function App({ Component, pageProps }: AppProps) {
         <div className={inter.className}>
           <NextNProgress color="#21fa90" />
           <NavBar />
-          <div>{user?.username}</div>
           <main>
             <Container className={styles.pageContainer}>
               <Component {...pageProps} />

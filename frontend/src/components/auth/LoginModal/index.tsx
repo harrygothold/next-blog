@@ -1,9 +1,12 @@
 import { useForm } from 'react-hook-form';
 import * as UsersApi from '@/network/api/user';
-import { Button, Form, Modal } from 'react-bootstrap';
+import { Alert, Button, Form, Modal } from 'react-bootstrap';
 import FormInputField from '@/components/FormInputField';
 import PasswordInputField from '@/components/PasswordInputField';
 import LoadingButton from '@/components/LoadingButton';
+import { useState } from 'react';
+import { UnauthorizedError } from '@/network/http-errors';
+import useAuthenticatedUser from '@/hooks/useAuthenticatedUser';
 
 interface LoginFormData {
   username: string;
@@ -21,6 +24,9 @@ const LoginModal = ({
   onSignUpInsteadClicked,
   onForgotPasswordClicked,
 }: LoginModalProps) => {
+  const [errorText, setErrorText] = useState<string | null>(null);
+  const { mutateUser } = useAuthenticatedUser();
+
   const {
     register,
     handleSubmit,
@@ -29,11 +35,17 @@ const LoginModal = ({
 
   const onSubmit = async (credentials: LoginFormData) => {
     try {
+      setErrorText(null);
       const user = await UsersApi.login(credentials);
-      alert(JSON.stringify(user));
+      mutateUser(user);
+      onDismiss();
     } catch (error) {
-      console.error(error);
-      alert(error);
+      if (error instanceof UnauthorizedError) {
+        setErrorText('Invalid credentials');
+      } else {
+        console.error(error);
+        alert(error);
+      }
     }
   };
 
@@ -43,6 +55,7 @@ const LoginModal = ({
         <Modal.Title>Log In</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        {errorText && <Alert variant="danger">{errorText}</Alert>}
         <Form onSubmit={handleSubmit(onSubmit)} noValidate>
           <FormInputField
             register={register('username')}
@@ -73,7 +86,9 @@ const LoginModal = ({
         </Form>
         <div className="d-flex align-items-center gap-1 justify-content-center mt-1">
           Don&apos;t have an account yet?
-          <Button variant="link">Sign Up</Button>
+          <Button onClick={onSignUpInsteadClicked} variant="link">
+            Sign Up
+          </Button>
         </div>
       </Modal.Body>
     </Modal>
