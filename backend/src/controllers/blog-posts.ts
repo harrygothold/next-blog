@@ -5,11 +5,21 @@ import BlogPostModel from '../models/blog-post';
 import assertIsDefined from '../utils/assertIsDefined';
 import env from '../env';
 import createHttpError from 'http-errors';
-import { BlogPostBody } from '../validation/blog-posts';
+import { BlogPostBody, GetBlogPostsQuery } from '../validation/blog-posts';
+import {
+  RequestHandlerWithBody,
+  RequestHandlerWithQuery,
+} from '../utils/types';
 
-export const getBlogPosts: RequestHandler = async (req, res, next) => {
+export const getBlogPosts: RequestHandlerWithQuery<GetBlogPostsQuery> = async (
+  req,
+  res,
+  next
+) => {
+  const authorId = req.query.authorId;
+  const filter = authorId ? { author: authorId } : {};
   try {
-    const allBlogPosts = await BlogPostModel.find()
+    const allBlogPosts = await BlogPostModel.find(filter)
       .sort({ _id: -1 })
       .populate('author')
       .exec();
@@ -49,12 +59,11 @@ export const getBlogPostBySlug: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const createBlogPost: RequestHandler<
-  unknown,
-  unknown,
-  BlogPostBody,
-  unknown
-> = async (req, res, next) => {
+export const createBlogPost: RequestHandlerWithBody<BlogPostBody> = async (
+  req,
+  res,
+  next
+) => {
   const { slug, title, summary, body } = req.body;
   const featuredImage = req.file;
   const authenticatedUser = req.user;

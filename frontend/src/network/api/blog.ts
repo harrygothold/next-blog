@@ -14,6 +14,11 @@ export const getBlogPosts = async () => {
   return response.data;
 };
 
+export const getBlogPostsByUser = async (userId: string) => {
+  const response = await api.get<BlogPost[]>(`/posts?authorId=${userId}`);
+  return response.data;
+};
+
 export const getAllBlogPostSlugs = async () => {
   const response = await api.get<string[]>('/posts/slugs');
   return response.data;

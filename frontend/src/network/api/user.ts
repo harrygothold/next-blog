@@ -30,3 +30,27 @@ export const getAuthenticatedUser = async () => {
 export const logout = async () => {
   await api.post('/users/logout');
 };
+
+export const getUserByUsername = async (username: string) => {
+  const response = await api.get<User>(`/users/profile/${username}`);
+  return response.data;
+};
+
+interface UpdateUserValues {
+  username?: string;
+  displayName?: string;
+  about?: string;
+  profilePic?: File;
+}
+
+export const updateUser = async (input: UpdateUserValues) => {
+  const formData = new FormData();
+  Object.entries(input).forEach(([key, value]) => {
+    if (value !== undefined) {
+      formData.append(key, value);
+    }
+  });
+
+  const response = await api.patch<User>('/users/me', formData);
+  return response.data;
+};
