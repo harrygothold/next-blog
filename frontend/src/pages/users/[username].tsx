@@ -16,20 +16,29 @@ import FormInputField from '@/components/FormInputField';
 import useSWR from 'swr';
 import LoadingButton from '@/components/LoadingButton';
 import BlogPostsGrid from '@/components/BlogPostsGrid';
+import { NotFoundError } from '@/network/http-errors';
 
 export const getServerSideProps: GetServerSideProps<
   UserProfilePageProps
 > = async ({ params }) => {
-  const username = params?.username?.toString();
-  if (!username) throw Error('username missing');
+  try {
+    const username = params?.username?.toString();
+    if (!username) throw Error('username missing');
 
-  const user = await UsersApi.getUserByUsername(username);
+    const user = await UsersApi.getUserByUsername(username);
 
-  return {
-    props: {
-      user,
-    },
-  };
+    return {
+      props: {
+        user,
+      },
+    };
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      return { notFound: true };
+    } else {
+      throw error;
+    }
+  }
 };
 
 interface UserInfoSectionProps {
