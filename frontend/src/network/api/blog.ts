@@ -1,4 +1,4 @@
-import { BlogPost } from '@/models/blog-post';
+import { BlogPost, BlogPostsPage } from '@/models/blog-post';
 import api from '@/network/axiosInstance';
 
 interface CreateBlogPostValues {
@@ -9,13 +9,15 @@ interface CreateBlogPostValues {
   featuredImage: File;
 }
 
-export const getBlogPosts = async () => {
-  const response = await api.get<BlogPost[]>('/posts');
+export const getBlogPosts = async (page: number = 1) => {
+  const response = await api.get<BlogPostsPage>(`/posts?page=${page}`);
   return response.data;
 };
 
-export const getBlogPostsByUser = async (userId: string) => {
-  const response = await api.get<BlogPost[]>(`/posts?authorId=${userId}`);
+export const getBlogPostsByUser = async (userId: string, page: number = 1) => {
+  const response = await api.get<BlogPostsPage>(
+    `/posts?authorId=${userId}&page=${page}`
+  );
   return response.data;
 };
 

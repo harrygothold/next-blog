@@ -17,6 +17,7 @@ import useSWR from 'swr';
 import LoadingButton from '@/components/LoadingButton';
 import BlogPostsGrid from '@/components/BlogPostsGrid';
 import { NotFoundError } from '@/network/http-errors';
+import PaginationBar from '@/components/PaginationBar';
 
 export const getServerSideProps: GetServerSideProps<
   UserProfilePageProps
@@ -158,30 +159,46 @@ interface UserBlogPostsSectionProps {
 }
 
 const UserBlogPostsSection = ({ user }: UserBlogPostsSectionProps) => {
+  const [page, setPage] = useState(1);
   const {
-    data: blogPosts,
+    data,
     isLoading: blogPostsLoading,
     error: blogPostsLoadingError,
-  } = useSWR(user._id, BlogApi.getBlogPostsByUser);
+  } = useSWR([user._id, page, 'user_posts'], ([userId, page]) =>
+    BlogApi.getBlogPostsByUser(userId, page)
+  );
+
+  const blogPosts = data?.blogPosts || [];
+  const totalPages = data?.totalPages || 0;
 
   return (
     <div>
       <h2>Blog Posts</h2>
+      {blogPosts.length > 0 && <BlogPostsGrid posts={blogPosts} />}
       <div className="d-flex flex-column align-items-center">
+        {blogPosts.length > 0 && (
+          <PaginationBar
+            currentPage={page}
+            pageCount={totalPages}
+            onPageItemClicked={(page: number) => setPage(page)}
+            className="mt-4"
+          />
+        )}
         {blogPostsLoading && <Spinner animation="border" />}
         {blogPostsLoadingError && <p>Blog posts could not be loaded</p>}
-        {blogPosts?.length === 0 && <p>This user has no posts</p>}
+        {!blogPostsLoading &&
+          !blogPostsLoadingError &&
+          blogPosts.length === 0 && <p>This user has no posts</p>}
       </div>
-      {blogPosts && <BlogPostsGrid posts={blogPosts} />}
     </div>
   );
 };
 
-interface UserProfilePageProps {
+interface ProfilePageProps {
   user: User;
 }
 
-const UserProfilePage = ({ user }: UserProfilePageProps) => {
+const UserProfile = ({ user }: ProfilePageProps) => {
   const { user: loggedInUser, mutateUser: mutateLoggedInUser } =
     useAuthenticatedUser();
   const [profileUser, setProfileUser] = useState(user);
@@ -214,4 +231,10 @@ const UserProfilePage = ({ user }: UserProfilePageProps) => {
   );
 };
 
-export default UserProfilePage;
+interface UserProfilePageProps {
+  user: User;
+}
+
+export default function UserProfilePage({ user }: UserProfilePageProps) {
+  return <UserProfile user={user} key={user._id} />;
+}

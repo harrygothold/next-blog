@@ -1,21 +1,48 @@
-import { BlogPost } from '@/models/blog-post';
+import { BlogPostsPage } from '@/models/blog-post';
 import { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import * as BlogApi from '@/network/api/blog';
 import BlogPostsGrid from '@/components/BlogPostsGrid';
+import { stringify } from 'querystring';
+import PaginationBar from '@/components/PaginationBar';
+import { useRouter } from 'next/router';
 
 interface BlogPageProps {
-  posts: BlogPost[];
+  data: BlogPostsPage;
 }
 
-export const getServerSideProps: GetServerSideProps<
-  BlogPageProps
-> = async () => {
-  const posts = await BlogApi.getBlogPosts();
-  return { props: { posts } };
+export const getServerSideProps: GetServerSideProps<BlogPageProps> = async ({
+  query,
+}) => {
+  const page = parseInt(query.page?.toString() || '1');
+
+  if (page < 1) {
+    query.page = '1';
+    return {
+      redirect: {
+        destination: '/blog?' + stringify(query),
+        permanent: false,
+      },
+    };
+  }
+
+  const data = await BlogApi.getBlogPosts(page);
+
+  if (data.totalPages > 0 && page > data.totalPages) {
+    query.page = data.totalPages.toString();
+    return {
+      redirect: {
+        destination: '/blog?' + stringify(query),
+        permanent: false,
+      },
+    };
+  }
+
+  return { props: { data } };
 };
 
-const BlogPage = ({ posts }: BlogPageProps) => {
+const BlogPage = ({ data: { blogPosts, page, totalPages } }: BlogPageProps) => {
+  const router = useRouter();
   return (
     <>
       <Head>
@@ -24,7 +51,25 @@ const BlogPage = ({ posts }: BlogPageProps) => {
       </Head>
       <div>
         <h1>Blog</h1>
-        <BlogPostsGrid posts={posts} />
+        {blogPosts.length > 0 && <BlogPostsGrid posts={blogPosts} />}
+        <div className="d-flex flex-column align-items-center">
+          {blogPosts.length === 0 && <p>No blog posts found</p>}
+          {blogPosts.length > 0 && (
+            <PaginationBar
+              currentPage={page}
+              pageCount={totalPages}
+              className="mt-4"
+              onPageItemClicked={(page: number) => {
+                router.push({
+                  query: {
+                    ...router.query,
+                    page,
+                  },
+                });
+              }}
+            />
+          )}
+        </div>
       </div>
     </>
   );
