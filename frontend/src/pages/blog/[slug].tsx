@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { NotFoundError } from '@/network/http-errors';
 import useAuthenticatedUser from '@/hooks/useAuthenticatedUser';
 import { FiEdit } from 'react-icons/fi';
+import useSWR from 'swr';
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const slugs = await BlogApi.getAllBlogPostSlugs();
@@ -28,7 +29,7 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({
 
     const post = await BlogApi.getBlogPostBySlug(slug);
 
-    return { props: { post } };
+    return { props: { fallbackPost: post } };
   } catch (error) {
     if (error instanceof NotFoundError) {
       return { notFound: true };
@@ -39,26 +40,33 @@ export const getStaticProps: GetStaticProps<BlogPostPageProps> = async ({
 };
 
 interface BlogPostPageProps {
-  post: BlogPost;
+  fallbackPost: BlogPost;
 }
 
-const BlogPostPage = ({
-  post: {
+const BlogPostPage = ({ fallbackPost }: BlogPostPageProps) => {
+  const { user } = useAuthenticatedUser();
+
+  const { data: blogPost } = useSWR(
+    fallbackPost.slug,
+    BlogApi.getBlogPostBySlug,
+    { revalidateOnFocus: false }
+  );
+
+  const {
     slug,
     title,
     summary,
     body,
     featuredImageUrl,
+    author,
     createdAt,
     updatedAt,
-    author,
-  },
-}: BlogPostPageProps) => {
-  const { user } = useAuthenticatedUser();
+  } = blogPost || fallbackPost;
+
   const createdUpdatedText =
     updatedAt > createdAt ? (
       <>
-        updated <time dateTime={updatedAt}>{formatDate(updatedAt)}</time>
+        Updated <time dateTime={updatedAt}>{formatDate(updatedAt)}</time>
       </>
     ) : (
       <time dateTime={createdAt}>{formatDate(createdAt)}</time>
