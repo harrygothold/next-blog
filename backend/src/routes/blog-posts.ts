@@ -5,14 +5,16 @@ import requiresAuth from '../middleware/requiresAuth';
 import validateRequestSchema from '../middleware/validateRequestSchema';
 import {
   createBlogPostSchema,
-  getBlogPostSchema,
+  deleteBlogPostSchema,
+  getBlogPostsSchema,
+  updateBlogPostSchema,
 } from '../validation/blog-posts';
 
 const router = express.Router();
 
 router.get(
   '/',
-  validateRequestSchema(getBlogPostSchema),
+  validateRequestSchema(getBlogPostsSchema),
   BlogPostsController.getBlogPosts
 );
 
@@ -26,6 +28,21 @@ router.post(
   featuredImageUpload.single('featuredImage'),
   validateRequestSchema(createBlogPostSchema),
   BlogPostsController.createBlogPost
+);
+
+router.patch(
+  '/:blogPostId',
+  requiresAuth,
+  featuredImageUpload.single('featuredImage'),
+  validateRequestSchema(updateBlogPostSchema),
+  BlogPostsController.updateBlogPost
+);
+
+router.delete(
+  '/:blogPostId',
+  requiresAuth,
+  validateRequestSchema(deleteBlogPostSchema),
+  BlogPostsController.deleteBlogPost
 );
 
 export default router;

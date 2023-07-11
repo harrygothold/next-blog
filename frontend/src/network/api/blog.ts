@@ -40,3 +40,29 @@ export const createBlogPost = async (input: CreateBlogPostValues) => {
   const response = await api.post<BlogPost>('/posts', formData);
   return response.data;
 };
+
+interface UpdateBlogPostValues {
+  slug: string;
+  title: string;
+  summary: string;
+  body: string;
+  featuredImage?: File;
+}
+
+export const updateBlogPost = async (
+  blogPostId: string,
+  input: UpdateBlogPostValues
+) => {
+  const formData = new FormData();
+  Object.entries(input).forEach(([key, value]) => {
+    if (value !== undefined) {
+      formData.append(key, value);
+    }
+  });
+
+  await api.patch(`/posts/${blogPostId}`, formData);
+};
+
+export const deleteBlogPost = async (blogPostId: string) => {
+  await api.delete(`/posts/${blogPostId}`);
+};
