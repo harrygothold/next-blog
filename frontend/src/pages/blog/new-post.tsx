@@ -4,7 +4,7 @@ import MarkdownEditor from '@/components/MarkdownEditor';
 import * as BlogApi from '@/network/api/blog';
 import { generateSlug } from '@/utils/utils';
 import { useRouter } from 'next/router';
-import { Form } from 'react-bootstrap';
+import { Form, Spinner } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -13,6 +13,8 @@ import {
   requiredStringSchema,
   slugSchema,
 } from '@/utils/validation';
+import useAuthenticatedUser from '@/hooks/useAuthenticatedUser';
+import useUnsavedChangesWarning from '@/hooks/useUnsavedChangesWarning';
 
 const validationSchema = yup.object({
   slug: slugSchema.required('This field is required'),
@@ -31,12 +33,15 @@ const CreateBlogPost = () => {
     setValue,
     watch,
     getValues,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<CreatePostFormData>({
     // @ts-ignore
     resolver: yupResolver(validationSchema),
   });
 
+  useUnsavedChangesWarning(isDirty && !isSubmitting);
+
+  const { user, userLoading } = useAuthenticatedUser();
   const router = useRouter();
 
   const onSubmit = async ({
@@ -66,6 +71,12 @@ const CreateBlogPost = () => {
     const slug = generateSlug(getValues('title'));
     setValue('slug', slug, { shouldValidate: true });
   };
+
+  if (userLoading) {
+    return <Spinner animation="border" className="d-block m-auto" />;
+  }
+
+  if (!userLoading && !user) router.push('/');
 
   return (
     <div>
