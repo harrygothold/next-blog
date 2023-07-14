@@ -14,6 +14,7 @@ import { Alert, Button, Form, Modal } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
+import SocialSignInSection from '../SocialSignInSection';
 
 const validationSchema = yup.object({
   username: usernameSchema.required('This field is required'),
@@ -94,6 +95,8 @@ const SignUpModal = ({
             Sign Up
           </LoadingButton>
         </Form>
+        <hr />
+        <SocialSignInSection />
         <div className="d-flex align-items-center gap-1 justify-content-center mt-1">
           Already have an account?
           <Button onClick={onLoginInsteadClicked} variant="link">

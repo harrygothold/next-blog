@@ -8,10 +8,12 @@ import styles from '@/styles/App.module.css';
 import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import NextNProgress from 'nextjs-progressbar';
+import useOnboadingRedirect from '@/hooks/useOnboardingRedirect';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export default function App({ Component, pageProps }: AppProps) {
+  useOnboadingRedirect();
   return (
     <>
       <Head>
