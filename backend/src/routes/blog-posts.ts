@@ -1,6 +1,10 @@
 import express from 'express';
 import * as BlogPostsController from '../controllers/blog-posts';
 import { featuredImageUpload } from '../middleware/image-upload';
+import {
+  createPostRateLimit,
+  updatePostRateLimit,
+} from '../middleware/rate-limit';
 import requiresAuth from '../middleware/requiresAuth';
 import validateRequestSchema from '../middleware/validateRequestSchema';
 import {
@@ -25,6 +29,7 @@ router.get('/post/:slug', BlogPostsController.getBlogPostBySlug);
 router.post(
   '/',
   requiresAuth,
+  createPostRateLimit,
   featuredImageUpload.single('featuredImage'),
   validateRequestSchema(createBlogPostSchema),
   BlogPostsController.createBlogPost
@@ -33,6 +38,7 @@ router.post(
 router.patch(
   '/:blogPostId',
   requiresAuth,
+  updatePostRateLimit,
   featuredImageUpload.single('featuredImage'),
   validateRequestSchema(updateBlogPostSchema),
   BlogPostsController.updateBlogPost

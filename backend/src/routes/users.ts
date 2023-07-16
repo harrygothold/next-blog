@@ -3,6 +3,10 @@ import passport from 'passport';
 import * as UsersController from '../controllers/users';
 import env from '../env';
 import { profilePicUpload } from '../middleware/image-upload';
+import {
+  loginRateLimit,
+  requestVerificationCodeRateLimit,
+} from '../middleware/rate-limit';
 import requiresAuth from '../middleware/requiresAuth';
 import setSessionReturnTo from '../middleware/setSessionReturnTo';
 import validateRequestSchema from '../middleware/validateRequestSchema';
@@ -23,12 +27,14 @@ router.post(
 
 router.post(
   '/verification-code',
+  requestVerificationCodeRateLimit,
   validateRequestSchema(requestVerificationCodeSchema),
   UsersController.requestEmailVerficationCode
 );
 
 router.post(
   '/reset-password-code',
+  requestVerificationCodeRateLimit,
   validateRequestSchema(requestVerificationCodeSchema),
   UsersController.requestResetPasswordCode
 );
@@ -39,8 +45,11 @@ router.post(
   UsersController.resetPassword
 );
 
-router.post('/login', passport.authenticate('local'), (req, res) =>
-  res.status(200).json(req.user)
+router.post(
+  '/login',
+  loginRateLimit,
+  passport.authenticate('local'),
+  (req, res) => res.status(200).json(req.user)
 );
 
 router.get('/me', requiresAuth, UsersController.getAuthenticatedUser);
