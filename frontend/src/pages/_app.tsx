@@ -9,6 +9,7 @@ import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import NextNProgress from 'nextjs-progressbar';
 import useOnboadingRedirect from '@/hooks/useOnboardingRedirect';
+import AuthModalsProvider from '@/components/auth/AuthModalsProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,16 +24,18 @@ export default function App({ Component, pageProps }: AppProps) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <SSRProvider>
-        <div className={inter.className}>
-          <NextNProgress color="#21fa90" />
-          <NavBar />
-          <main>
-            <Container className={styles.pageContainer}>
-              <Component {...pageProps} />
-            </Container>
-          </main>
-          <Footer />
-        </div>
+        <AuthModalsProvider>
+          <div className={inter.className}>
+            <NextNProgress color="#21fa90" />
+            <NavBar />
+            <main>
+              <Container className={styles.pageContainer}>
+                <Component {...pageProps} />
+              </Container>
+            </main>
+            <Footer />
+          </div>
+        </AuthModalsProvider>
       </SSRProvider>
     </>
   );
