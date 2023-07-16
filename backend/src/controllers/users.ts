@@ -1,11 +1,18 @@
 import { RequestHandler } from 'express';
 import createHttpError from 'http-errors';
 import UserModel from '../models/user';
+import EmailVerificationToken from '../models/email-verification-token';
 import bcrypt from 'bcrypt';
 import assertIsDefined from '../utils/assertIsDefined';
-import { SignUpBody, UpdateUserBody } from '../validation/users';
+import {
+  RequestVerificationCodeBody,
+  SignUpBody,
+  UpdateUserBody,
+} from '../validation/users';
 import sharp from 'sharp';
 import env from '../env';
+import crypto from 'crypto';
+import * as Email from '../utils/email';
 
 export const signUp: RequestHandler<
   unknown,
@@ -13,7 +20,7 @@ export const signUp: RequestHandler<
   SignUpBody,
   unknown
 > = async (req, res, next) => {
-  const { username, email, password: rawPassword } = req.body;
+  const { username, email, password: rawPassword, verificationCode } = req.body;
   try {
     const existingUsername = await UserModel.findOne({ username })
       // checks username without spacing or casing
@@ -22,6 +29,17 @@ export const signUp: RequestHandler<
 
     if (existingUsername) {
       throw createHttpError(409, 'Username already taken');
+    }
+
+    const emailVerificationToken = await EmailVerificationToken.findOne({
+      email,
+      verificationCode,
+    }).exec();
+
+    if (!emailVerificationToken) {
+      throw createHttpError(400, 'Verification Code incorrect or expired');
+    } else {
+      await emailVerificationToken.deleteOne();
     }
 
     const hashedPassword = await bcrypt.hash(rawPassword, 10);
@@ -40,6 +58,39 @@ export const signUp: RequestHandler<
       if (error) throw error;
       res.status(201).json(newUser);
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const requestEmailVerficationCode: RequestHandler<
+  unknown,
+  unknown,
+  RequestVerificationCodeBody,
+  unknown
+> = async (req, res, next) => {
+  const { email } = req.body;
+  try {
+    const existingEmail = await UserModel.findOne({ email })
+      .collation({
+        locale: 'en',
+        strength: 2,
+      })
+      .exec();
+
+    if (existingEmail) {
+      throw createHttpError(
+        409,
+        'A user with this email address already exists. Please log in instead.'
+      );
+    }
+
+    const verificationCode = crypto.randomInt(100000, 999999).toString();
+    await EmailVerificationToken.create({ email, verificationCode });
+
+    await Email.sendVerificationCode(email, verificationCode);
+
+    res.sendStatus(200);
   } catch (error) {
     next(error);
   }

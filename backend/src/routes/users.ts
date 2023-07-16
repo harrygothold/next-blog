@@ -6,7 +6,11 @@ import { profilePicUpload } from '../middleware/image-upload';
 import requiresAuth from '../middleware/requiresAuth';
 import setSessionReturnTo from '../middleware/setSessionReturnTo';
 import validateRequestSchema from '../middleware/validateRequestSchema';
-import { signUpSchema, updateUserSchema } from '../validation/users';
+import {
+  requestVerificationCodeSchema,
+  signUpSchema,
+  updateUserSchema,
+} from '../validation/users';
 
 const router = express.Router();
 
@@ -14,6 +18,12 @@ router.post(
   '/signup',
   validateRequestSchema(signUpSchema),
   UsersController.signUp
+);
+
+router.post(
+  '/verification-code',
+  validateRequestSchema(requestVerificationCodeSchema),
+  UsersController.requestEmailVerficationCode
 );
 
 router.post('/login', passport.authenticate('local'), (req, res) =>

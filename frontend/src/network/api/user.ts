@@ -5,11 +5,16 @@ interface SignUpValues {
   username: string;
   email: string;
   password: string;
+  verificationCode: string;
 }
 
 export const signUp = async (credentials: SignUpValues) => {
   const response = await api.post<User>('/users/signup', credentials);
   return response.data;
+};
+
+export const requestEmailVerificationCode = async (email: string) => {
+  await api.post('/users/verification-code', { email });
 };
 
 interface LoginValues {
