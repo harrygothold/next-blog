@@ -12,6 +12,7 @@ import SignUpModal from '../auth/SignUpModal';
 import { User } from '@/models/user';
 import profilePicPlaceholder from '@/assets/images/profile-pic-placeholder.png';
 import * as UsersApi from '@/network/api/user';
+import ResetPasswordModal from '../auth/ResetPasswordModal';
 
 interface LoggedInViewProps {
   user: User;
@@ -71,7 +72,8 @@ const LoggedInView = ({ user }: LoggedInViewProps) => {
 
 const LoggedOutView = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showSignUpnModal, setShowSignUpModal] = useState(false);
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   return (
     <>
       <Nav className="ms-auto">
@@ -96,15 +98,27 @@ const LoggedOutView = () => {
             setShowLoginModal(false);
             setShowSignUpModal(true);
           }}
-          onForgotPasswordClicked={() => {}}
+          onForgotPasswordClicked={() => {
+            setShowLoginModal(false);
+            setShowResetPasswordModal(true);
+          }}
         />
       )}
-      {showSignUpnModal && (
+      {showSignUpModal && (
         <SignUpModal
           onDismiss={() => setShowSignUpModal(false)}
           onLoginInsteadClicked={() => {
             setShowSignUpModal(false);
             setShowLoginModal(true);
+          }}
+        />
+      )}
+      {showResetPasswordModal && (
+        <ResetPasswordModal
+          onDismiss={() => setShowResetPasswordModal(false)}
+          onSignUpClicked={() => {
+            setShowResetPasswordModal(false);
+            setShowSignUpModal(true);
           }}
         />
       )}

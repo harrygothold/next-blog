@@ -8,6 +8,7 @@ import setSessionReturnTo from '../middleware/setSessionReturnTo';
 import validateRequestSchema from '../middleware/validateRequestSchema';
 import {
   requestVerificationCodeSchema,
+  resetPasswordSchema,
   signUpSchema,
   updateUserSchema,
 } from '../validation/users';
@@ -24,6 +25,18 @@ router.post(
   '/verification-code',
   validateRequestSchema(requestVerificationCodeSchema),
   UsersController.requestEmailVerficationCode
+);
+
+router.post(
+  '/reset-password-code',
+  validateRequestSchema(requestVerificationCodeSchema),
+  UsersController.requestResetPasswordCode
+);
+
+router.post(
+  '/reset-password',
+  validateRequestSchema(resetPasswordSchema),
+  UsersController.resetPassword
 );
 
 router.post('/login', passport.authenticate('local'), (req, res) =>
