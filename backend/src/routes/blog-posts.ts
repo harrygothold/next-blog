@@ -13,6 +13,7 @@ import {
   getBlogPostsSchema,
   updateBlogPostSchema,
 } from '../validation/blog-posts';
+import { createCommentSchema, getCommentsSchema } from '../validation/comments';
 
 const router = express.Router();
 
@@ -49,6 +50,20 @@ router.delete(
   requiresAuth,
   validateRequestSchema(deleteBlogPostSchema),
   BlogPostsController.deleteBlogPost
+);
+
+// COMMENT ROUTES
+router.get(
+  '/:blogPostId/comments',
+  validateRequestSchema(getCommentsSchema),
+  BlogPostsController.getCommentsForBlogPost
+);
+
+router.post(
+  '/:blogPostId/comments',
+  requiresAuth,
+  validateRequestSchema(createCommentSchema),
+  BlogPostsController.createComment
 );
 
 export default router;

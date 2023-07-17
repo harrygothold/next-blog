@@ -1,4 +1,5 @@
 import { BlogPost, BlogPostsPage } from '@/models/blog-post';
+import { Comment, CommentsPage } from '@/models/comment';
 import api from '@/network/axiosInstance';
 
 interface CreateBlogPostValues {
@@ -65,4 +66,28 @@ export const updateBlogPost = async (
 
 export const deleteBlogPost = async (blogPostId: string) => {
   await api.delete(`/posts/${blogPostId}`);
+};
+
+export const getCommentsForBlogPost = async (
+  blogPostId: string,
+  continueAfterId?: string
+) => {
+  const response = await api.get<CommentsPage>(
+    `/posts/${blogPostId}/comments?${
+      continueAfterId ? `continueAfterId=${continueAfterId}` : ''
+    }`
+  );
+  return response.data;
+};
+
+export const createComment = async (
+  blogPostId: string,
+  parentCommentId: string | undefined,
+  text: string
+) => {
+  const response = await api.post<Comment>(`/posts/${blogPostId}/comments`, {
+    text,
+    parentCommentId,
+  });
+  return response.data;
 };

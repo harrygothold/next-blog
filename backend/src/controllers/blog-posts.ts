@@ -2,6 +2,7 @@ import { RequestHandler } from 'express';
 import mongoose from 'mongoose';
 import sharp from 'sharp';
 import BlogPostModel from '../models/blog-post';
+import CommentModel from '../models/comment';
 import assertIsDefined from '../utils/assertIsDefined';
 import env from '../env';
 import createHttpError from 'http-errors';
@@ -17,6 +18,12 @@ import {
 } from '../utils/types';
 import fs from 'fs';
 import axios from 'axios';
+import {
+  CreateCommentBody,
+  CreateCommentParams,
+  GetCommentsParams,
+  GetCommentsQuery,
+} from '../validation/comments';
 
 export const getBlogPosts: RequestHandlerWithQuery<GetBlogPostsQuery> = async (
   req,
@@ -225,6 +232,71 @@ export const deleteBlogPost: RequestHandler<
     );
 
     res.sendStatus(204);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCommentsForBlogPost: RequestHandler<
+  GetCommentsParams,
+  unknown,
+  unknown,
+  GetCommentsQuery
+> = async (req, res, next) => {
+  const { blogPostId } = req.params;
+  const { continueAfterId } = req.query;
+
+  const pageSize = 3;
+
+  try {
+    const query = CommentModel.find({
+      blogPostId,
+      parentCommentId: undefined,
+    }).sort({ _id: -1 });
+
+    if (continueAfterId) {
+      query.lt('_id', continueAfterId);
+    }
+
+    const result = await query
+      .limit(pageSize + 1)
+      .populate('author')
+      .exec();
+
+    const comments = result.slice(0, pageSize);
+    const endOfPaginationReached = result.length <= pageSize;
+
+    res.status(200).json({
+      comments,
+      endOfPaginationReached,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createComment: RequestHandler<
+  CreateCommentParams,
+  unknown,
+  CreateCommentBody,
+  unknown
+> = async (req, res, next) => {
+  const { blogPostId } = req.params;
+  const { text, parentCommentId } = req.body;
+  const authenticatedUser = req.user;
+  try {
+    assertIsDefined(authenticatedUser);
+
+    const newComment = await CommentModel.create({
+      blogPostId,
+      text,
+      author: authenticatedUser,
+      parentCommentId,
+    });
+
+    await CommentModel.populate(newComment, { path: 'author' });
+
+    res.status(201).json(newComment);
   } catch (error) {
     next(error);
   }
