@@ -80,6 +80,18 @@ export const getCommentsForBlogPost = async (
   return response.data;
 };
 
+export const getRepliesForComment = async (
+  commentId: string,
+  continueAfterId?: string
+) => {
+  const response = await api.get<CommentsPage>(
+    `/posts/comments/${commentId}/replies?${
+      continueAfterId ? `continueAfterId=${continueAfterId}` : ''
+    }`
+  );
+  return response.data;
+};
+
 export const createComment = async (
   blogPostId: string,
   parentCommentId: string | undefined,
@@ -90,4 +102,15 @@ export const createComment = async (
     parentCommentId,
   });
   return response.data;
+};
+
+export const updateComment = async (commentId: string, newText: string) => {
+  const response = await api.patch<Comment>(`/posts/comments/${commentId}`, {
+    newText,
+  });
+  return response.data;
+};
+
+export const deleteComment = async (commentId: string) => {
+  await api.delete(`/posts/comments/${commentId}`);
 };

@@ -2,8 +2,8 @@ import { Comment as CommentModel } from '@/models/comment';
 import { useCallback, useEffect, useState } from 'react';
 import * as BlogApi from '@/network/api/blog';
 import CreateCommentBox from '../CreateCommentBox';
-import Comment from '../Comment';
 import { Button, Spinner } from 'react-bootstrap';
+import CommentThread from '../CommentThread';
 
 interface BlogCommentsSectionProps {
   blogPostId: string;
@@ -54,6 +54,22 @@ const CommentSection = ({ blogPostId }: BlogCommentsSectionProps) => {
     setComments([newComment, ...comments]);
   };
 
+  const handleCommentUpdated = (updatedComment: CommentModel) => {
+    const update = comments.map((existingComment) =>
+      existingComment._id === updatedComment._id
+        ? { ...updatedComment, repliesCount: existingComment.repliesCount }
+        : existingComment
+    );
+    setComments(update);
+  };
+
+  const handleCommentDeleted = (deletedComment: CommentModel) => {
+    const update = comments.filter(
+      (comment) => comment._id !== deletedComment._id
+    );
+    setComments(update);
+  };
+
   return (
     <div>
       <p className="h5">Comments</p>
@@ -63,7 +79,12 @@ const CommentSection = ({ blogPostId }: BlogCommentsSectionProps) => {
         onCommentCreated={handleCommentCreated}
       />
       {comments.map((comment) => (
-        <Comment comment={comment} key={comment._id} />
+        <CommentThread
+          onCommentUpdated={handleCommentUpdated}
+          onCommentDeleted={handleCommentDeleted}
+          comment={comment}
+          key={comment._id}
+        />
       ))}
       <div className="mt-2 text-center">
         {commentsPaginationEnd && comments.length === 0 && (

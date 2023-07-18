@@ -2,7 +2,7 @@ import { AuthModalsContext } from '@/components/auth/AuthModalsProvider';
 import useAuthenticatedUser from '@/hooks/useAuthenticatedUser';
 import { Comment } from '@/models/comment';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import * as BlogApi from '@/network/api/blog';
@@ -21,6 +21,9 @@ interface CreateCommentBoxProps {
   parentCommentId?: string;
   title: string;
   onCommentCreated: (comment: Comment) => void;
+  showCancel?: boolean;
+  onCancel?: () => void;
+  defaultText?: string;
 }
 
 const CreateCommentBox = ({
@@ -28,6 +31,9 @@ const CreateCommentBox = ({
   parentCommentId,
   title,
   onCommentCreated,
+  showCancel,
+  onCancel,
+  defaultText,
 }: CreateCommentBoxProps) => {
   const { user } = useAuthenticatedUser();
   const authModalsContext = useContext(AuthModalsContext);
@@ -36,7 +42,11 @@ const CreateCommentBox = ({
     handleSubmit,
     formState: { isSubmitting },
     reset,
+    setFocus,
   } = useForm<CreateCommentInput>({
+    defaultValues: {
+      text: defaultText || '',
+    },
     // @ts-ignore
     resolver: yupResolver(validationSchema),
   });
@@ -57,6 +67,12 @@ const CreateCommentBox = ({
       alert(error);
     }
   };
+
+  useEffect(() => {
+    if (parentCommentId) {
+      setFocus('text');
+    }
+  }, [parentCommentId, setFocus]);
 
   if (!user) {
     return (
@@ -83,6 +99,11 @@ const CreateCommentBox = ({
         <LoadingButton type="submit" isLoading={isSubmitting}>
           Send
         </LoadingButton>
+        {showCancel && (
+          <Button onClick={onCancel} className="ms-2" variant="outline-primary">
+            Cancel
+          </Button>
+        )}
       </Form>
     </div>
   );

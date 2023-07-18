@@ -21,8 +21,13 @@ import axios from 'axios';
 import {
   CreateCommentBody,
   CreateCommentParams,
+  DeleteCommentParams,
+  GetCommentRepliesParams,
+  GetCommentRepliesQuery,
   GetCommentsParams,
   GetCommentsQuery,
+  UpdateCommentBody,
+  UpdateCommentParams,
 } from '../validation/comments';
 
 export const getBlogPosts: RequestHandlerWithQuery<GetBlogPostsQuery> = async (
@@ -266,6 +271,50 @@ export const getCommentsForBlogPost: RequestHandler<
     const comments = result.slice(0, pageSize);
     const endOfPaginationReached = result.length <= pageSize;
 
+    const commentsWithRepliesCount = await Promise.all(
+      comments.map(async (comment) => {
+        const repliesCount = await CommentModel.countDocuments({
+          parentCommentId: comment._id,
+        });
+        return { ...comment.toObject(), repliesCount };
+      })
+    );
+
+    res.status(200).json({
+      comments: commentsWithRepliesCount,
+      endOfPaginationReached,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCommentReplies: RequestHandler<
+  GetCommentRepliesParams,
+  unknown,
+  unknown,
+  GetCommentRepliesQuery
+> = async (req, res, next) => {
+  const { commentId: parentCommentId } = req.params;
+  const { continueAfterId } = req.query;
+
+  const pageSize = 2;
+
+  try {
+    const query = CommentModel.find({ parentCommentId });
+
+    if (continueAfterId) {
+      query.gt('_id', continueAfterId);
+    }
+
+    const result = await query
+      .limit(pageSize + 1)
+      .populate('author')
+      .exec();
+
+    const comments = result.slice(0, pageSize);
+    const endOfPaginationReached = result.length <= pageSize;
+
     res.status(200).json({
       comments,
       endOfPaginationReached,
@@ -297,6 +346,69 @@ export const createComment: RequestHandler<
     await CommentModel.populate(newComment, { path: 'author' });
 
     res.status(201).json(newComment);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateComment: RequestHandler<
+  UpdateCommentParams,
+  unknown,
+  UpdateCommentBody,
+  unknown
+> = async (req, res, next) => {
+  const { commentId } = req.params;
+  const { newText } = req.body;
+  const authenticatedUser = req.user;
+  try {
+    assertIsDefined(authenticatedUser);
+
+    const commentToUpdate = await CommentModel.findById(commentId)
+      .populate('author')
+      .exec();
+
+    if (!commentToUpdate) {
+      throw createHttpError(404);
+    }
+
+    if (!commentToUpdate.author.equals(authenticatedUser._id)) {
+      throw createHttpError(401);
+    }
+
+    commentToUpdate.text = newText;
+    await commentToUpdate.save();
+
+    res.status(200).json(commentToUpdate);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteComment: RequestHandler<
+  DeleteCommentParams,
+  unknown,
+  unknown,
+  unknown
+> = async (req, res, next) => {
+  const { commentId } = req.params;
+  const authenticatedUser = req.user;
+  try {
+    assertIsDefined(authenticatedUser);
+
+    const commentToDelete = await CommentModel.findById(commentId).exec();
+
+    if (!commentToDelete) {
+      throw createHttpError(404);
+    }
+
+    if (!commentToDelete.author.equals(authenticatedUser._id)) {
+      throw createHttpError(401);
+    }
+
+    await commentToDelete.deleteOne();
+    await CommentModel.deleteMany({ parentCommentId: commentId }).exec();
+
+    res.sendStatus(200);
   } catch (error) {
     next(error);
   }
