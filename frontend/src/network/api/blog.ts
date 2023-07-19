@@ -68,6 +68,17 @@ export const deleteBlogPost = async (blogPostId: string) => {
   await api.delete(`/posts/${blogPostId}`);
 };
 
+export const uploadInPostImage = async (image: File) => {
+  const formData = new FormData();
+  formData.append('inPostImage', image);
+
+  const response = await api.post<{ imageUrl: string }>(
+    '/posts/images',
+    formData
+  );
+  return response.data;
+};
+
 export const getCommentsForBlogPost = async (
   blogPostId: string,
   continueAfterId?: string

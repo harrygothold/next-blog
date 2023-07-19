@@ -1,9 +1,13 @@
 import express from 'express';
 import * as BlogPostsController from '../controllers/blog-posts';
-import { featuredImageUpload } from '../middleware/image-upload';
+import {
+  featuredImageUpload,
+  inPostImageUpload,
+} from '../middleware/image-upload';
 import {
   createPostRateLimit,
   updatePostRateLimit,
+  uploadImageRateLimit,
 } from '../middleware/rate-limit';
 import requiresAuth from '../middleware/requiresAuth';
 import validateRequestSchema from '../middleware/validateRequestSchema';
@@ -12,6 +16,7 @@ import {
   deleteBlogPostSchema,
   getBlogPostsSchema,
   updateBlogPostSchema,
+  uploadInPostImageSchema,
 } from '../validation/blog-posts';
 import {
   createCommentSchema,
@@ -56,6 +61,15 @@ router.delete(
   requiresAuth,
   validateRequestSchema(deleteBlogPostSchema),
   BlogPostsController.deleteBlogPost
+);
+
+router.post(
+  '/images',
+  requiresAuth,
+  uploadImageRateLimit,
+  inPostImageUpload.single('inPostImage'),
+  validateRequestSchema(uploadInPostImageSchema),
+  BlogPostsController.uploadInPostImage
 );
 
 // COMMENT ROUTES

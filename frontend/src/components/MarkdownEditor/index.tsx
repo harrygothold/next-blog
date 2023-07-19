@@ -6,7 +6,8 @@ import {
   UseFormSetValue,
   UseFormWatch,
 } from 'react-hook-form';
-import ReactMarkdown from 'react-markdown';
+import * as BlogApi from '@/network/api/blog';
+import Markdown from '../Markdown';
 
 const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
   ssr: false,
@@ -29,13 +30,23 @@ const MarkdownEditor = ({
   setValue,
   editorHeight = 500,
 }: MarkdownEditorProps) => {
+  const uploadInPostImage = async (image: File) => {
+    try {
+      const response = await BlogApi.uploadInPostImage(image);
+      return response.imageUrl;
+    } catch (error) {
+      console.error(error);
+      alert(error);
+    }
+  };
+
   return (
     <Form.Group className="mb-3">
       {label && <Form.Label>{label}</Form.Label>}
       <MdEditor
         {...register}
         id={`${register.name}-input`}
-        renderHTML={(text) => <ReactMarkdown>{text}</ReactMarkdown>}
+        renderHTML={(text) => <Markdown>{text}</Markdown>}
         value={watch(register.name)}
         onChange={({ text }) =>
           setValue(register.name, text, {
@@ -46,6 +57,8 @@ const MarkdownEditor = ({
         className={error ? 'is-invalid' : ''}
         style={{ height: editorHeight }}
         placeholder="Write something..."
+        onImageUpload={uploadInPostImage}
+        imageAccept=".jpg,.png"
       />
       <Form.Control.Feedback type="invalid">
         {error?.message}
