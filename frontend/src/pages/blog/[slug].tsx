@@ -81,6 +81,7 @@ const BlogPostPage = ({ fallbackPost }: BlogPostPageProps) => {
       <Head>
         <title>{`${title} - Flow Blog`}</title>
         <meta name="description" content={summary} />
+        <meta property="og:image" content={featuredImageUrl} key="og:image" />
       </Head>
       <div className={styles.container}>
         {user?._id === author._id && (

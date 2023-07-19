@@ -12,7 +12,7 @@ const LoadingButton = ({
   ...rest
 }: LoadingButtonProps & ButtonProps) => {
   return (
-    <Button {...rest}>
+    <Button {...rest} disabled={isLoading || rest.disabled}>
       {isLoading && (
         <>
           <Spinner
