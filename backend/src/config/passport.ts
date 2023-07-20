@@ -82,7 +82,7 @@ passport.use(
     {
       clientID: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
-      callbackURL: '/users/oauth2/redirect/github',
+      callbackURL: `${env.SERVER_URL}/users/oauth2/redirect/github`,
     },
     async (
       accessToken: string,

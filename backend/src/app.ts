@@ -11,10 +11,16 @@ import sessionConfig from './config/session';
 import passport from 'passport';
 import './config/passport';
 import corsOptions from './config/cors';
+import env from './env';
 
 const app = express();
 
-app.use(morgan('dev'));
+if (env.NODE_ENV === 'production') {
+  app.set('trust proxy', true);
+  app.use(morgan('combined'));
+} else {
+  app.use(morgan('dev'));
+}
 
 app.use(express.json());
 
